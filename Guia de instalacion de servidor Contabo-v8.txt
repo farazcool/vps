@@ -1,0 +1,2354 @@
+﻿---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+SERVIDOR CON DOCKER
+---------------------------------------------------------------------------------------------------
+UBUNTU 22.04
+Nuevo servidor
+---------------------------------------------------------------------------------------------------
+Ultima modificacion: 2022-07-13
+20220704 Nuevo
+IP:  		62.171.185.8
+USUARIO: 	root
+PASSWORD:	VKEnbi8,q?vmk
+Contabo: gS4WvfRbD9cd
+Mysql: ^FfM#5AjhDRM
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 1: Actualizacion del sistema, instalar herramientas y setear zona horaria**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+sudo apt-get update
+sudo apt-get upgrade
+#Herramientas net,etc
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+sudo apt install net-tools
+
+#Compresores
+sudo apt-get install zip
+sudo apt-get install unzip
+sudo apt install gzip
+
+# SINCRONIZAR LA HORA DEL SISTEMA
+https://www.simplified.guide/ubuntu/change-timezone
+sudo apt-get -y install ntp ntpdate
+sudo unlink /etc/localtime
+sudo ln -s /usr/share/zoneinfo/America/Montevideo /etc/localtime
+timedatectl
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 2: Setear nombre del servidor**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+sudo hostnamectl set-hostname server.mechabios.com
+hostname -f
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 3: Instalar y configurar firewall
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://tecadmin.net/setup-ufw-for-firewall-on-ubuntu-and-debian/
+
+sudo apt-get install ufw​​​2​​
+->Habilitar logging
+sudo ufw logging on
+
+->deshabilitar IPV6
+sudo vi /etc/default/ufw
+IPV6=no
+
+->Habilitar OpenSSH - SFTP
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw enable
+
+->Reiniciar y chequear
+sudo ufw reload
+sudo ufw status verbose
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 6: Instalar Docker y Docker-compose
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://www.cloudbooklet.com/how-to-install-docker-on-ubuntu-22-04/#:~:text=Step%201%3A%20Install%20Docker&text=Install%20some%20packages%20which%20allows%20you%20to%20use%20the%20packages%20over%20HTTPS.&text=Add%20the%20GPG%20key%20of%20Docker%20repository.&text=Now%20add%20the%20Docker%20repository,jammy%20)%20to%20the%20apt%20sources.&text=Update%20the%20packages%20index%20and,Docker%20from%20official%20Docker%20repo.
+-------------------------------------------------------------------------------------
+# Desinstalar versiones viejas
+sudo apt-get remove docker docker-engine docker.io docker-compose containerd runc
+
+-------------------------------------------------------------------------------------
+# Agregar la clave de docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+-------------------------------------------------------------------------------------
+# Seleccionar el repositorio
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+-------------------------------------------------------------------------------------
+# Actualizar el sistema  
+sudo apt update
+sudo apt upgrade
+sudo apt-cache policy docker-ce
+-------------------------------------------------------------------------------------
+# instalar Docker
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
+Pruebas:
+docker run hello-world
+docker --version
+docker-compose --version
+-------------------------------------------------------------------------------------
+# Agregar mantenimiento a docker --Es
+sudo usermod -aG docker mantenimiento
+-------------------------------------------------------------------------------------
+# Verificar Docker
+docker info
+Comandos docker:
+docker run hello-world
+docker images
+docker ps
+docker ps -a
+docker ps -l
+docker start container-id/name
+docker stop container-id/name
+docker rm container-id/name
+docker run -it container-id/name
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 5: Creacion de directorios**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+mkdir -p /var/data \
+/var/data/jee \
+/var/data/mariaDBData \
+/var/data/jee/prueba \
+/var/data/nginx \
+/var/data/nginx/configuraciones \
+/var/data/descargados \
+/var/data/nodeJS \
+/var/data/nodeJS/1base \
+/var/data/temp \
+/var/data/certificados \
+/var/data/certificados/letsencrypt \
+/var/data/ftp \
+/var/data/ftp/files \
+/var/data/log \
+/var/data/log/sitiosWeb \
+/var/data/log/sitiosWeb/pruebaWeb \
+/var/data/log/sitiosWeb/pruebaMvc \
+/var/data/log/sitiosWeb/mechabios \
+/var/data/docker \
+/var/data/docker/fuentes \
+/var/data/docker/fuentes/apache \
+/var/data/docker/fuentes/nginx \
+/var/data/docker/fuentes/apache/php \
+/var/data/docker/fuentes/wildFly \
+/var/data/docker/fuentes/mariaDB \
+/var/data/sitiosWeb \
+/var/data/sitiosWeb/php \
+/var/data/sitiosWeb/php/apache \
+/var/data/sitiosWeb/php/apache/test \
+/var/data/sitiosWeb/php/apache/test/html \
+/var/data/sitiosWeb/php/apache/php1 \
+/var/data/sitiosWeb/php/apache/php1/html \
+/var/data/sitiosWeb/php/apache/php2 \
+/var/data/sitiosWeb/php/apache/php2/html \
+/var/data/sitiosWeb/php/apache/apache1.your_domain \
+/var/data/sitiosWeb/php/apache/apache2.your_domain \
+/var/data/sitiosWeb/pruebaWeb \
+/var/data/sitiosWeb/pruebaMvc \
+/var/data/sitiosWeb/mechabios \
+/var/data/sitiosWeb/imap.mechabios \
+/var/data/sitiosWeb/iot.mechabios \
+/var/data/sitiosWeb/mail.mechabios \
+/var/data/sitiosWeb/smtp.mechabios \
+/var/data/sitiosWeb/mqtt.mechabios \
+/var/data/sitiosWeb/pop.mechabios \
+/var/data/sitiosWeb/mechabios/.well-known \
+/var/data/sitiosWeb/imap.mechabios/.well-known \
+/var/data/sitiosWeb/iot.mechabios/.well-known \
+/var/data/sitiosWeb/mail.mechabios/.well-known \
+/var/data/sitiosWeb/smtp.mechabios/.well-known \
+/var/data/sitiosWeb/mqtt.mechabios/.well-known \
+/var/data/sitiosWeb/pop.mechabios/.well-known
+
+
+
+Para restaurar base de datos Mechabios:
+docker exec -i mariadb1 sh -c 'exec mysql -uroot -p"$MARIADB_ROOT_PASSWORD"' < /var/data/docker/fuentes/mariaDB/Restaurar_Mechabios.sql
+
+
+
+
+/**Paso 3: Editar hosts y verificacion**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+sudo vi /etc/hosts
+127.0.0.1 localhost server.mechabios.com 
+# mail.mechabios.com localhost.localdomain localhost mechabios.com php1.com php2.com pruebaweb.com pruebamvc.com
+hostname -f
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/** Paso 6: Instalar .NET CORE **/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+cd /var/data/descargados
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update; \
+  sudo apt-get install -y apt-transport-https && \
+  sudo apt-get update && \
+  sudo apt-get install -y dotnet-sdk-6.0
+
+dotnet --version
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/** Paso 7: Creacion de paginas de pruebas php  y NET**/
+---------------------------------------------------------------------------------------------------
+echo "<h1 style='color: green;'>PHP 1</h1>" | sudo tee /var/data/sitiosWeb/php/apache/php1/html/index.html
+echo "<h1 style='color: blue;'>PHP 2</h1>" | sudo tee /var/data/sitiosWeb/php/apache/php2/html/index.html
+echo "<h1 style='color: blue;'>Test</h1>" | sudo tee /var/data/sitiosWeb/php/apache/test/html/index.html
+
+echo "<html><head></head><body><h1>mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/mechabios/index.html
+echo "<html><head></head><body><h1>IMAP mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/imap.mechabios/index.html
+echo "<html><head></head><body><h1>IOT mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/iot.mechabios/index.html
+echo "<html><head></head><body><h1>MAIL mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/mail.mechabios/index.html
+echo "<html><head></head><body><h1>SMTP mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/smtp.mechabios/index.html
+echo "<html><head></head><body><h1>MQTT mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/mqtt.mechabios/index.html
+echo "<html><head></head><body><h1>POP mechabios</h1></body></html>" | sudo tee /var/data/sitiosWeb/pop.mechabios/index.html
+
+
+
+echo "<h1 style='color: green;'>Apache 1</h1>" | sudo tee /var/data/sitiosWeb/php/apache/apache1.your_domain/index.html
+echo "<h1 style='color: red;'>Apache 2</h1>" | sudo tee /var/data/sitiosWeb/php/apache/apache2.your_domain/index.html
+
+echo "<?php phpinfo(); ?>" | sudo tee /var/data/sitiosWeb/php/apache/apache1.your_domain/info.php
+echo "<?php phpinfo(); ?>" | sudo tee /var/data/sitiosWeb/php/apache/apache2.your_domain/info.php
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 8: Instalacion y configuracion de Apache PHP FPM **/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://help.clouding.io/hc/es/articles/4407515282066-Configurar-NGINX-como-Proxy-inverso-para-servidor-Web-Apache-con-FastCGI
+https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-20-04-server
+-----------------------------------------------------------------------------------------------------------------------
+apt update && apt upgrade -y
+apt install apache2 php-fpm php-curl php-dompdf php-mbstring php-imagick php-zip php-gd -y
+apt install unzip build-essential apache2-dev gcc make m4 autoconf automake libtool -y
+cd /var/data/descargados/ && wget https://github.com/FastCGI-Archives/fcgi2/archive/refs/heads/master.zip
+unzip master.zip && cd fcgi2-master/
+./autogen.sh && ./configure
+make && make install
+cd /var/data/descargados/ && wget https://github.com/gnif/mod_rpaf/archive/stable.zip
+unzip stable.zip && cd mod_rpaf-stable && make && make install
+vi /etc/apache2/mods-available/rpaf.load
+	LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so
+vi /etc/apache2/mods-available/rpaf.conf
+	<IfModule mod_rpaf.c>
+	  RPAF_Enable On
+	  RPAF_Header X-Real-Ip
+	  RPAF_ProxyIPs 62.171.185.8
+	  RPAF_SetHostName On
+	  RPAF_SetHTTPS On
+	  RPAF_SetPort On
+	</IfModule>
+a2enconf php7.4-fpm && a2enmod rpaf actions proxy_fcgi setenvif cache cache_disk expires headers
+vi /etc/apache2/ports.conf
+	cambiar el puerto a 8080
+a2dissite 000-default
+
+cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/pruebaapache.es.conf
+vi /etc/apache2/sites-available/pruebaapache.es.conf
+	<VirtualHost *:8080>
+	  ServerName pruebaapache.es
+	  ServerAdmin webmaster@localhost
+	  DocumentRoot /var/www/html/
+
+	  CacheQuickHandler off
+	  CacheLock on
+	  CacheLockPath /tmp/
+	  CacheIgnoreHeaders Set-Cookie
+	  <Location />
+		CacheEnable disk
+		CacheHeader on
+		CacheDefaultExpire 800
+		CacheMaxExpire 64000
+		CacheIgnoreNoLastMod On
+		ExpiresActive on
+		ExpiresDefault A300
+	  </Location>
+
+
+	  ErrorLog ${APACHE_LOG_DIR}/error.log
+	  CustomLog ${APACHE_LOG_DIR}/access.log combined
+	</VirtualHost>
+a2ensite pruebaapache.es.conf
+apachectl -t
+systemctl restart apache2
+
+sudo apt install net-tools
+sudo netstat -tlpn
+sudo lsof -i -P -n | grep LISTEN
+ss -tlpn sport :8080
+
+echo "<?php phpinfo(); ?>" | tee /var/www/html/info.php
+# ufw allow 8080
+
+Probar con:
+curl http://localhost:8080/info.php
+
+
+
+
+sudo vi /etc/apache2/sites-available/apache1.your_domain.conf
+	--/etc/apache2/sites-available/apache1.your_domain.conf
+	<VirtualHost *:8080>
+		ServerName apache1.your_domain
+		ServerAlias www.apache1.your_domain
+		DocumentRoot /var/data/sitiosWeb/php/apache/apache1.your_domain/
+		<Directory /var/data/sitiosWeb/php/apache/apache1.your_domain>
+			AllowOverride None
+			Require all granted		
+		</Directory>
+	</VirtualHost>
+
+sudo vi /etc/apache2/sites-available/apache2.your_domain.conf
+	--/etc/apache2/sites-available/apache2.your_domain.conf
+	<VirtualHost *:8080>
+		ServerName apache2.your_domain
+		ServerAlias www.apache2.your_domain
+		DocumentRoot /var/data/sitiosWeb/php/apache/apache2.your_domain
+		<Directory /var/data/sitiosWeb/php/apache/apache2.your_domain>
+			AllowOverride None
+			Require all granted
+		</Directory>
+	</VirtualHost>
+
+
+Editar el archivo /etc/apache2/apache2.conf
+vi /etc/apache2/apache2.conf
+Agregar:
+	<Directory /var/data/sitiosWeb/php/apache/apache1.your_domain/>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+	</Directory>
+
+	<Directory /var/data/sitiosWeb/php/apache/apache2.your_domain/>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+	</Directory>
+
+
+
+sudo a2ensite apache1.your_domain
+sudo a2ensite apache2.your_domain
+
+sudo apachectl -t
+
+sudo systemctl reload apache2
+ufw allow 8080
+http://apache1.your_domain:8080
+http://apache2.your_domain:8080
+
+http://apache1.your_domain:8080/info.php
+http://apache2.your_domain:8080/info.php
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/** Paso 9: Hacer sitios de pruebas **/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://stackoverflow.com/questions/70332897/how-to-change-default-port-no-of-my-net-core-6-api
+https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-6.0
+-----------------------------------------------------------------------------------------------------------------------
+cd /var/data/sitiosWeb/pruebaWeb
+dotnet new web
+Editar 
+vi /var/data/sitiosWeb/pruebaWeb/Properties/launchSettings.json
+ 
+Quitar la parte https y setar el puerto o solo setar el puerto http y con *(si se quiere habilitar ya para todos)??
+ "profiles": {
+    "pruebaWeb": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7274;http://*:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+")
+:wq
+dotnet restore
+# ufw allow 5000
+dotnet run
+curl http://localhost:5000
+
+cd /var/data/sitiosWeb/pruebaMvc
+dotnet new mvc
+Editar 
+vi /var/data/sitiosWeb/pruebaMvc/Properties/launchSettings.json
+Quitar la parte https y setar el puerto o solo setar el puerto http??
+"profiles": {
+    "pruebaMvc": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+:wq
+vi Program.cs
+Comentar linea:
+//app.UseHttpsRedirection();
+:wq
+dotnet restore
+# ufw allow 5001
+dotnet run
+
+curl http://localhost:5001
+
+cd /var/data/sitiosWeb/mechabios
+dotnet new mvc
+
+Editar 
+vi /var/data/sitiosWeb/mechabios/Properties/launchSettings.json
+Quitar la parte https y setar el puerto o solo setar el puerto http??
+"profiles": {
+    "mechabios": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5002",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+:wq
+vi Program.cs
+Comentar linea:
+//app.UseHttpsRedirection();
+:wq
+dotnet restore
+# ufw allow 5002
+dotnet run
+
+curl http://localhost:5002
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 10: Instalar supervisor **/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://github.com/Supervisor/supervisor/issues/717
+
+
+apt-get update -y
+apt-get install supervisor -y
+
+supervisord -v
+systemctl status supervisor
+
+vi /etc/supervisor/supervisord.conf
+[inet_http_server]
+port=127.0.0.1:9001 #port=*:9001
+username=cpiriz
+password=123*Caps.
+
+systemctl restart supervisor
+
+vi /etc/supervisor/conf.d/pruebaWeb.conf
+[program: pruebaWeb]
+command=/usr/bin/dotnet /var/data/sitiosWeb/pruebaWeb/bin/Debug/net6.0/pruebaWeb.dll --urls=http://localhost:5000/
+directory=/var/data/sitiosWeb/pruebaWeb/
+autostart=true
+autorestart=true
+startretries=10
+stderr_logfile=/var/data/log/sitiosWeb/pruebaWeb/dotnet_pruebaWeb.err.log
+stderr_logfile_maxbytes=100MB
+stdout_logfile=/var/data/log/sitiosWeb/pruebaWeb/dotnet_pruebaWeb.out.log
+stdout_logfile_maxbytes=10MB
+environment=ASPNETCORE_ENVIRONMENT=Production
+user=www-data
+stopsignal=INT
+
+
+supervisorctl reread
+supervisorctl update
+
+Ejemplo de administracion
+supervisorctl
+stop pruebaWeb
+start pruebaWeb
+exit
+ps aux | grep pruebaWeb
+
+
+vi /etc/supervisor/conf.d/pruebaMvc.conf
+[program:pruebaMvc]
+command=/usr/bin/dotnet /var/data/sitiosWeb/pruebaMvc/bin/Debug/net6.0/pruebaMvc.dll --urls=http://localhost:5001/
+directory=/var/data/sitiosWeb/pruebaMvc/
+autostart=true
+autorestart=true
+startretries=10
+stderr_logfile=/var/data/log/sitiosWeb/pruebaMvc/dotnet_pruebaMvc.err.log
+stderr_logfile_maxbytes=100MB
+stdout_logfile=/var/data/log/sitiosWeb/pruebaMvc/dotnet_pruebaMvc.out.log
+stdout_logfile_maxbytes=100MB
+environment=ASPNETCORE_ENVIRONMEN=Production
+user=www-data
+stopsignal=INT
+
+
+
+supervisorctl reread
+supervisorctl update
+supervisorctl
+
+
+
+vi /etc/supervisor/conf.d/mechabios.conf
+[program:mechabios]
+command=/usr/bin/dotnet /var/data/sitiosWeb/mechabios/bin/Debug/net6.0/mechabios.dll --urls=http://localhost:5002/
+directory=/var/data/sitiosWeb/mechabios/
+autostart=true
+autorestart=true
+stderr_logfile=/var/data/log/sitiosWeb/mechabios/dotnet_mechabios.err.log
+stdout_logfile=/var/data/log/sitiosWeb/mechabios/dotnet_mechabios.out.log
+environment=ASPNETCORE_ENVIRONMEN=Production
+startretries=10
+user=www-data
+stopsignal=INT
+
+supervisorctl reread
+supervisorctl update
+supervisorctl
+
+Verificar y reiniciar:
+service supervisor stop
+service supervisor start
+tail -f /var/log/supervisor/supervisord.log
+
+Comando para verificar puertos escuchando:
+sudo lsof -i -P -n | grep LISTEN
+
+Verificar y reiniciar:
+service supervisor stop
+service supervisor start
+tail -f /var/log/supervisor/supervisord.log
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 11: Instalar Mosquito - primera parte**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://github.com/eclipse/mosquitto/issues/1603
+https://mosquitto.org/documentation/authentication-methods/
+https://upcloud.com/community/tutorials/install-secure-mqtt-broker-ubuntu/
+BUENO: https://www.howtoforge.com/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-ubuntu-20-04/
+
+
+sudo apt update
+sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa
+sudo apt install mosquitto mosquitto-clients
+sudo systemctl status mosquitto
+
+
+sudo mosquitto_passwd -c /etc/mosquitto/passwd mqttmecha
+Password: sVirN7Dqa2T6L
+
+sudo vi /etc/mosquitto/conf.d/custom.conf
+allow_anonymous false
+password_file /etc/mosquitto/passwd
+listener 1883
+
+PRUEBAS
+ESCUCHA - SUBSCRIPCION
+Funciona
+mosquitto_sub -h localhost -p 1883 -t test -u mqttmecha -P sVirN7Dqa2T6L
+Funciona
+mosquitto_sub -h www.mechabios.com -p 1883 -t test -u mqttmecha -P sVirN7Dqa2T6L
+PUBLICA
+Funciona
+mosquitto_pub -h localhost -p 1883 -t test -m 'LOCALHOST 1883' -u mqttmecha -P sVirN7Dqa2T6L
+Funciona
+mosquitto_pub -h www.mechabios.com -p 1883 -t test -m 'MECHABIOS 1883' -u mqttmecha -P sVirN7Dqa2T6L
+Funciona
+mosquitto_pub -h www.mechabios.com -p 1883 -t test -m 'MECHABIOS 1883' -u mqttmecha -P sVirN7Dqa2T6L
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 12: Instalacion de Letsencrypt certbot**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://github.com/helgeerbe/certbot-dns-ionos/discussions/4
+https://github.com/helgeerbe/certbot-dns-ionos
+Prefijo: 7d235860690d4d66803a9f603b1d152f
+clave: XiPxgJ90OmAwEVRdE0958RmFNINLNRd2z_D6HW7diDgg6rFDWJo3kw8UFCBmct-VyHdUDlLHm4r4DNIHmH7SpQ
+endpoint: https://api.hosting.ionos.com
+vi /var/data/temp/credenciales.ini
+	dns_ionos_prefix = 7d235860690d4d66803a9f603b1d152f
+	dns_ionos_secret = XiPxgJ90OmAwEVRdE0958RmFNINLNRd2z_D6HW7diDgg6rFDWJo3kw8UFCBmct-VyHdUDlLHm4r4DNIHmH7SpQ
+	dns_ionos_endpoint = https://api.hosting.ionos.com
+
+apt install python3-pip
+pip3 install certbot-dns-ionos
+
+certbot certonly \
+  --authenticator dns-ionos \
+  --dns-ionos-credentials /var/data/temp/credenciales.ini \
+  --dns-ionos-propagation-seconds 900 \
+  --server https://acme-v02.api.letsencrypt.org/directory \
+  --agree-tos \
+  --rsa-key-size 4096 \
+  --force-renewal \
+  --preferred-chain \
+  "ISRG Root X1" \
+  -d 'mechabios.com' \
+  -d '*.mechabios.com' \
+  -m mechabios@gmail.com
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 13: Instalar Mosquito - Parte 2**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://github.com/eclipse/mosquitto/issues/1603
+https://mosquitto.org/documentation/authentication-methods/
+https://upcloud.com/community/tutorials/install-secure-mqtt-broker-ubuntu/
+BUENO: https://www.howtoforge.com/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-ubuntu-20-04/
+
+
+sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 #2048
+#sudo mkdir -p /var/data/letsencrypt
+sudo cp /etc/letsencrypt/live/mechabios.com/fullchain.pem /etc/mosquitto/certs/server.pem
+sudo cp /etc/letsencrypt/live/mechabios.com/privkey.pem /etc/mosquitto/certs/server.key
+sudo chown mosquitto: /etc/mosquitto/certs
+sudo chmod 644 server.key
+
+sudo vi /etc/mosquitto/conf.d/custom.conf
+listener 8883
+certfile /etc/mosquitto/certs/server.pem
+cafile /etc/ssl/certs/ISRG_Root_X1.pem
+keyfile /etc/mosquitto/certs/server.key
+dhparamfile /etc/ssl/certs/dhparam.pem
+
+Por las dudas
+https://github.com/owntracks/tools/issues/6
+sudo chown mosquitto: /etc/mosquitto/certs
+sudo chmod 644 /etc/mosquitto/certs/server.key
+
+PRUEBAS
+Funciona
+mosquitto_sub -h www.mechabios.com -p 8883 -t test -u mqttmecha -P sVirN7Dqa2T6L
+Funciona
+mosquitto_pub -h mechabios.com -t test -m "hello" -p 8883 --capath /etc/ssl/certs/ -u mqttmecha -P sVirN7Dqa2T6L
+
+sudo vi /etc/mosquitto/conf.d/custom.conf
+listener 8083
+protocol websockets
+certfile /etc/mosquitto/certs/server.pem
+cafile  /etc/ssl/certs/ISRG_Root_X1.pem
+keyfile /etc/mosquitto/certs/server.key
+dhparamfile /etc/ssl/certs/dhparam.pem
+
+
+NOTAS
+sudo ufw allow 8083
+sudo ufw status numbered
+borrar la lina del puerto 8083
+
+Para probar:
+http://www.hivemq.com/demos/websocket-client/
+
+Para ver despues como conectar con arduino
+https://forum.arduino.cc/t/mqtt-and-tls/665171/14?page=2
+https://github.com/OPEnSLab-OSU/SSLClient/issues/7
+https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 14: Instalar nginx
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://www.linuxcapable.com/how-to-install-modsecurity-with-nginx-on-ubuntu-20-04/
+https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04
+---------------------------------------------------------------------------------------------------
+
+sudo apt update && sudo apt upgrade -y
+sudo whoami
+
+sudo systemctl stop nginx
+sudo apt-get purge nginx -y && sudo apt autoremove nginx -y
+
+sudo add-apt-repository ppa:ondrej/nginx-stable -y && sudo apt update
+sudo add-apt-repository ppa:ondrej/nginx-mainline -y && sudo apt update
+sudo apt install nginx-core nginx-common nginx nginx-full
+sudo vi /etc/apt/sources.list.d/ondrej-ubuntu-nginx-mainline-*.list
+	descomenta la linea
+	# deb-src http://ppa.launchpad.net/ondrej/nginx-mainline/ubuntu/ focal main
+sudo apt update
+sudo mkdir /usr/local/src/nginx && cd /usr/local/src/nginx
+Por las dudas, si da error
+	sudo chown username:username /usr/local/src/ -R 
+sudo apt install dpkg-dev -y && sudo apt source nginx
+ls
+nginx -v
+
+vi /etc/nginx/nginx.conf
+	server_names_hash_bucket_size 64;
+nginx -t
+service nginx restart
+systemctl restart nginx
+nginx -s reload
+service nginx status
+
+(*) Administracion
+systemctl status nginx
+sudo nginx -t
+sudo systemctl stop nginx
+sudo systemctl start nginx
+sudo systemctl restart nginx
+sudo systemctl reload nginx
+sudo systemctl disable nginx
+sudo systemctl enable nginx
+nginx -V
+-- Directorio por defecto
+/var/www/html
+-- Configuracion
+/etc/nginx
+/etc/nginx/nginx.conf
+/etc/nginx/sites-available/
+/etc/nginx/sites-enabled/
+/etc/nginx/snippets
+-- Logs
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 15: Modificacion de sitios apache para nginx
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+rm /etc/nginx/sites-enabled/default
+sudo vi /etc/nginx/sites-available/nginx1.your_domain
+server {
+    listen 80;
+
+    root /var/data/sitiosWeb/php/apache/apache1.your_domain;
+    index index.php index.html index.htm;
+
+    server_name nginx1.your_domain www.nginx1.your_domain;
+    location / {
+        try_files $uri $uri/ /index.php;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+        include snippets/fastcgi-php.conf;
+    }
+}
+
+sudo vi /etc/nginx/sites-available/nginx2.your_domain
+server {
+	listen 80;
+    root /var/data/sitiosWeb/php/apache/apache2.your_domain;
+    index index.php index.html index.htm;
+
+    server_name nginx2.your_domain www.nginx2.your_domain;
+    location / {
+        try_files $uri $uri/ /index.php;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+        include snippets/fastcgi-php.conf;
+    }
+}
+
+/*------------------------------------------------------------------------------------------*/                             
+vi php1.com
+/*------------------------------------------------------------------------------------------*/                             
+cd /etc/nginx/sites-available/
+server {
+        listen 80 ;
+        listen [::]:80 ;
+
+        root /var/data/sitiosWeb/php/apache/php1/html;
+        index index.php index.html index.htm index.nginx-debian.html;
+        server_name php1.com www.php1.com;
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+                fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+}
+
+/*------------------------------------------------------------------------------------------*/                             
+vi php2.com
+/*------------------------------------------------------------------------------------------*/                             
+server {
+	listen 80 ;
+	listen [::]:80 ;
+
+	root /var/data/sitiosWeb/php/apache/php2/html;
+
+	index index.php index.html index.htm index.nginx-debian.html;
+	server_name php2.com www.php2.com;
+	location / {
+		try_files $uri $uri/ =404;
+	}
+
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+	}
+
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+
+mv /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+rm /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/nginx1.your_domain /etc/nginx/sites-enabled/nginx1.your_domain
+sudo ln -s /etc/nginx/sites-available/nginx2.your_domain /etc/nginx/sites-enabled/nginx2.your_domain
+sudo ln -s /etc/nginx/sites-available/php1.com /etc/nginx/sites-enabled/php1.com
+sudo ln -s /etc/nginx/sites-available/php2.com /etc/nginx/sites-enabled/php2.com
+
+
+sudo nginx -t
+
+sudo systemctl reload nginx
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/** Paso 16: Edicion de archivos de bloques para nginx net core**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://stackoverflow.com/questions/58194114/net-core-3-0-nginx-not-serving-static-files
+https://stackoverflow.com/questions/43781087/asp-net-core-on-linux-with-nginx-routing-doesnt-work
+Remove try_files $uri $uri/ =404; as it's testing if a certain url exists on the file system and if not return 404.
+But /Home/Index is a route, which do not map to an existing file but to controller action, hence you get the 404 error.
+https://devanswers.co/install-lets-encrypt-ssl-cert-nginx-ubuntu-20-04/
+https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04
+https://www.rosehosting.com/blog/how-to-secure-nginx-with-lets-encrypt-on-ubuntu-20-04/
+https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04-es
+
+
+/*------------------------------------------------------------------------------------------*/             
+vi pruebaWeb.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;
+
+	root /var/data/sitiosWeb/pruebaWeb;
+
+	index index.html index.htm index.nginx-debian.html;
+	server_name pruebaweb.com www.pruebaweb.com;
+	location ~* /(css|js|lib) {
+        root /var/data/sitiosWeb/pruebaWeb/wwwroot;
+    }
+
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		#try_files $uri $uri/ =404;
+		proxy_pass http://localhost:5000;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection keep-alive;
+		proxy_set_header Host $host;
+		proxy_cache_bypass $http_upgrade;
+	}
+}
+/*------------------------------------------------------------------------------------------*/             
+vi pruebaMvc.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;
+
+	root /var/data/sitiosWeb/pruebaMvc;
+
+	index index.html index.htm index.nginx-debian.html;
+	server_name pruebamvc.com www.pruebamvc.com;
+
+	location ~* /(css|js|lib) {
+        root /var/data/sitiosWeb/pruebaMvc/wwwroot;
+    }
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		#try_files $uri $uri/ =404;
+		proxy_pass http://localhost:5001;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection keep-alive;
+		proxy_set_header Host $host;
+		proxy_cache_bypass $http_upgrade;
+	}
+}
+/*------------------------------------------------------------------------------------------*/
+vi mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+        #listen 80 ;
+        #listen [::]:80 ;
+
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+
+        if ($scheme != "https") {
+                return 301 https://$host$request_uri;
+        }
+
+        root /var/data/sitiosWeb/mechabios;
+        index index.html index.htm index.nginx-debian.html;
+        server_name mechabios.com www.mechabios.com pop.mechabios.com smtp.mechabios.com imap.mechabios.com mail.mechabios.com iot.mechabios.com;
+        # mqtt.mechabios.com
+
+        # This location block fixed my issue.
+        location ~* /(css|js|lib) {
+            root /var/data/sitiosWeb/mechabios/wwwroot;
+        }
+
+
+        location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+                expires 1d;
+                access_log off;
+                add_header X-Static-File true;
+        }
+        location / {
+                # try_files $uri $uri/ =404;
+                proxy_pass http://127.0.0.1:5002;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection keep-alive;
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+        }
+        location ~ /.well-known {
+                allow all;
+        }
+}
+
+-------------------------------------------------------------------------------------------------------------
+CREO LOS LINKS
+
+ln -s /etc/nginx/sites-available/pruebaWeb.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/pruebaMvc.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/mechabios.com /etc/nginx/sites-enabled/
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/** Paso 17: Instalar MariaDB **/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-20-04-es
+https://geekytheory.com/como-permitir-el-acceso-remoto-a-una-base-de-datos-mysql
+https://exerror.com/failed-error-set-password-has-no-significance-for-user-rootlocalhost-as-the-authentication-method-used-doesnt-store-authentication-data-in-the-mysql-server/
+
+sudo apt update
+sudo apt install mysql-server
+
+sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password by '^FfM#5AjhDRM';
+sudo mysql_secure_installation
+Password: ^FfM#5AjhDRM
+
+->Permitir conexiones remotas
+sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf
+ bind-address           = 0.0.0.0 #127.0.0.1
+ mysqlx-bind-address    = *, 0.0.0.0 #0.0.0.0 #127.0.0.1
+
+Crear usuario y contraseña:
+ CREATE USER 'cpirizito'@'%' IDENTIFIED BY '123*Caps.';
+ GRANT ALL PRIVILEGES ON *.* TO 'cpirizito'@'%' WITH GRANT OPTION;
+ FLUSH PRIVILEGES;
+
+
+Verificar el servicio:
+sudo systemctl status mysql.service
+https://askubuntu.com/questions/766334/cant-login-as-mysql-user-root-from-normal-user-account-in-ubuntu-16-04
+Ver si habilito el puerto para workbench
+
+Usuario para Mechabios Mysql : 
+
+iotinizer
+GBiwk5iCC94aX..
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 18) INSTALAR NODEJS Y NPM
+-----------------------------------------------------------------------------------------------------------------------
+https://github.com/nodesource/distributions
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+apt-get install -y build-essential
+--No seria necesario
+sudo apt install npm
+
+Probar
+node --version
+npm --version
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 19) Quitar arhivos de pruebas de supervisor
+-----------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+rm /etc/supervisor/conf.d/pruebaWeb.conf
+rm /etc/supervisor/conf.d/pruebaMvc.conf
+supervisorctl reread
+systemctl restart supervisor
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 20) Quitar sitios de pruebas de sitios habilitados (enabled, solo .net core)
+-----------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+rm /etc/nginx/sites-enabled/pruebaMvc.com
+rm /etc/nginx/sites-enabled/pruebaWeb.com 
+service nginx restart
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 21) Quitar sitios de PHP
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+a2dissite apache1.your_domain
+a2dissite apache2.your_domain
+a2dissite pruebaapache.es
+
+rm /etc/nginx/sites-available/sites-enabled/php1.com
+rm /etc/nginx/sites-available/sites-enabled/php2.com
+rm /etc/nginx/sites-available/sites-enabled/nginx1.your_domain
+rm /etc/nginx/sites-available/sites-enabled/nginx2.your_domain
+
+systemctl restart apache2
+systemctl reload apache2
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 22) Instalar python
+https://computingforgeeks.com/how-to-install-python-on-ubuntu-linux-system/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+sudo apt update && sudo apt upgrade -y
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.10 (comando python3)
+sudo apt install python3-pip
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 23) Restaurar Mechabios
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+ufw 3306
+Conectarse
+create database Mechabios;
+Abrir el archivo c Workbench: Restaurar_Mechabios.sql
+Dar permisos al usuario:
+CREATE USER 'cpirizito'@'%' IDENTIFIED BY '123*Caps.';
+GRANT ALL PRIVILEGES ON Mechabios.* TO 'cpirizito'@'%' WITH GRANT OPTION;
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Paso 24) COnfigurar y modificar archivos js NODE
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+https://developpaper.com/node-connects-mysql-and-encapsulates-its-addition-deletion-query-and-modification/
+Carpeta ESCUCHAMOSQUITO
+/var/data/nodeJS/1db_base
+
+npm install mysql2
+vi db.js
+
+var mySQL = require('mysql2');
+var pool  = mySQL.createPool({
+    host: 'localhost',
+    user: 'cpirizito',
+    password: '123*Caps.',
+    database: 'Mechabios',
+    debug:false,
+    connectionLimit : 100
+});
+var getConnection = function (cb) {
+    pool.getConnection(function (err, connection) {
+        //Si hay error lo manda a la callback
+        if(err) {
+          return cb(err);
+        }
+        cb(null, connection);
+    });
+};
+module.exports = getConnection;
+
+
+/var/data/nodeJS/2mqtt_base
+npm install mqtt
+vi mosquitto.js
+
+var mqtt=require('mqtt');
+var cliente_mqtt= mqtt.connect('mqtts://mechabios.com:8883',
+{
+  username: 'mqttmecha',
+  password: 'sVirN7Dqa2T6L'
+});
+
+module.exports = cliente_mqtt
+
+
+
+
+
+
+
+
+
+
+
+
+https://www.hardill.me.uk/wordpress/2020/10/14/hostname-based-proxying-with-mqtt/
+https://codeutility.org/nginx-connect-to-mqtt-googleapis-com8883-via-proxy-and-another-domain-stack-overflow/
+https://github.com/GoogleCloudPlatform/python-docs-samples/tree/main/iot/api-client/mqtt_example
+stream {  
+  map $ssl_server_name $targetBackend {
+    mechabios.com  		127.0.0.1:8883;    
+  }
+ 
+  map $ssl_server_name $targetCert {
+    mechabios.com /etc/mosquitto/certs/server.pem   
+  }
+ 
+  map $ssl_server_name $targetCertKey {
+    mechabios.com /etc/mosquitto/certs/server.key
+  }
+  
+ }
+   
+  server {
+    listen 8883         ssl; 
+    ssl_protocols       TLSv1.2;
+    ssl_certificate     $targetCert;
+    ssl_certificate_key $targetCertKey;
+         
+    proxy_connect_timeout 1s;
+    proxy_pass $targetBackend;
+  } 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 8: Instalar Waf y Owasp
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+sudo apt install git -y
+git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/local/src/ModSecurity/
+cd /usr/local/src/ModSecurity/
+sudo apt install gcc make build-essential autoconf automake libtool libcurl4-openssl-dev liblua5.3-dev libfuzzy-dev ssdeep gettext pkg-config libpcre3 libpcre3-dev libxml2 libxml2-dev libcurl4 libgeoip-dev libyajl-dev doxygen -y
+git submodule init
+git submodule update
+./build.sh
+./configure
+make
+sudo make install
+sudo git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src/ModSecurity-nginx
+cd /usr/local/src/nginx/nginx-1.23.0/
+sudo apt build-dep nginx && sudo apt install uuid-dev -y
+sudo ./configure --with-compat --add-dynamic-module=/usr/local/src/ModSecurity-nginx
+sudo make modules
+sudo cp objs/ngx_http_modsecurity_module.so /usr/share/nginx/modules/
+sudo vi /etc/nginx/nginx.conf
+	Poner la lina entes de events
+	load_module modules/ngx_http_modsecurity_module.so;
+	Agregar dentro del bloque http, despues de default_type
+		modsecurity on;
+		modsecurity_rules_file /etc/nginx/modsec/modsec-config.conf;
+		
+sudo mkdir /etc/nginx/modsec/
+sudo cp /usr/local/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf
+sudo vi /etc/nginx/modsec/modsecurity.conf
+	Comentar
+	SecRuleEngine DetectionOnly
+	Poner
+	SecRuleEngine On
+	# Log everything we know about a transaction.
+	Comentar
+	SecAuditLogParts ABIJDEFHZ
+	Poner 
+	SecAuditLogParts ABCEFHJKZ
+sudo vi /etc/nginx/modsec/modsec-config.conf
+	Include /etc/nginx/modsec/modsecurity.conf
+sudo cp /usr/local/src/ModSecurity/unicode.mapping /etc/nginx/modsec/
+sudo nginx -t
+sudo systemctl restart nginx
+
+Donde me paro
+cd /tmp/
+wget https://github.com/coreruleset/coreruleset/archive/refs/tags/v3.3.2.zip
+-- wget https://github.com/coreruleset/coreruleset/archive/refs/tags/nightly.zip
+sudo dnf install unzip -y
+sudo unzip v3.3.2.zip -d /etc/nginx/modsec
+sudo cp /etc/nginx/modsec/coreruleset-3.3.2/crs-setup.conf.example /etc/nginx/modsec/coreruleset-3.3.2/crs-setup.conf
+sudo vi /etc/nginx/modsec/modsec-config.conf
+	Include /etc/nginx/modsec/coreruleset-3.3.2/crs-setup.conf
+	Include /etc/nginx/modsec/coreruleset-3.3.2/rules/*.conf
+sudo nginx -t
+sudo systemctl restart nginx
+
+sudo vi /etc/nginx/modsec/coreruleset-3.3.2-dev/crs-setup.conf
+	seleccionar Anomaly Scoring Mode
+	Paranoia Level 1
+
+Prueba
+https://www.mechabios.com/index.html?exec=/bin/bash
+Deberia de dar error:	403 forbidden error
+
+
+
+
+
+
+
+
+/*------------------------------------------------------------------------------------------*/
+vi mqtt.mechabios.com --este no lo configure aun
+/*------------------------------------------------------------------------------------------*/
+https://iotassistant.io/home-assistant/install-mqtt-websockets-on-nginx/
+
+upstream mqtt.mechabios.com {
+  server localhost:8883;
+}
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+server {
+  # listen on both hosts
+  server_name mqtt.mechabios.com;
+  
+  location / {
+     proxy_http_version 1.1;    
+     proxy_pass http://localhost:8883;
+     proxy_set_header Upgrade $http_upgrade;
+     proxy_set_header Connection "upgrade";   
+     proxy_set_header Host $host;
+  }
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+server {
+    if ($host = mqtt.mechabios.com) {
+        return 301 https://$host$request_uri;
+    }
+  server_name mqtt.mechabios.com;
+    listen 80;
+    return 404; 
+}
+
+
+-------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/**Paso 12: Modificacion de archivo nginx para usar certificados y 443**/
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------*/
+vi mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+        #listen 80 ;
+        #listen [::]:80 ;
+
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+
+        if ($scheme != "https") {
+                return 301 https://$host$request_uri;
+        }
+
+        root /var/data/sitiosWeb/mechabios;
+        index index.html index.htm index.nginx-debian.html;
+        server_name mechabios.com www.mechabios.com mqtt.mechabios.com pop.mechabios.com smtp.mechabios.com imap.mechabios.com mail.mechabios.com iot.mechabios.com;
+
+        # This location block fixed my issue.
+        location ~* /(css|js|lib) {
+            root /var/data/sitiosWeb/mechabios/wwwroot;
+        }
+
+
+        location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+                expires 1d;
+                access_log off;
+                add_header X-Static-File true;
+        }
+        location / {
+                # try_files $uri $uri/ =404;
+                proxy_pass http://127.0.0.1:5002;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection keep-alive;
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+        }
+        location ~ /.well-known {
+                allow all;
+        }
+}
+/*------------------------------------------------------------------------------------------*/
+Reiniciar nginx
+service nginx restart
+Verificador de seguridad online :
+https://www.ssllabs.com/ssltest/
+https://www.thesslstore.com/ssltools/ssl-checker.php
+https://geekflare.com/es/tools/tls-test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sudo apt update
+apt-get remove certbot
+apt-get install snapd
+snap --version
+
+sudo snap install core; sudo snap refresh core
+sudo snap install --classic certbot
+
+#Creo que no es necesario
+#sudo ln -s /snap/bin/certbot /usr/bin/certbot
+certbot --version
+
+
+sudo certbot certonly --webroot --preferred-chain "ISRG Root X1" --force-renewal --agree-tos -m mechabios@gmail.com --preferred-challenges http --server https://acme-v02.api.letsencrypt.org/directory -w /var/data/sitiosWeb/mechabios -d mechabios.com -d www.mechabios.com -w /var/data/sitiosWeb/mqtt.mechabios -d mqtt.mechabios.com -w /var/data/sitiosWeb/pop.mechabios -d pop.mechabios.com -w /var/data/sitiosWeb/smtp.mechabios -d smtp.mechabios.com -w /var/data/sitiosWeb/imap.mechabios -d imap.mechabios.com -w /var/data/sitiosWeb/mail.mechabios -d mail.mechabios.com -w /var/data/sitiosWeb/iot.mechabios -d iot.mechabios.com
+
+
+Chequeo de certificados
+cat chain.pem cert.pem fullchain.pem | openssl verify
+
+Para renovar certificado:
+Manualmente
+	sudo certbot certonly --force-renew --webroot --preferred-chain "ISRG Root X1" --force-renewal --agree-tos -m mechabios@gmail.com --preferred-challenges http --server https://acme-v02.api.letsencrypt.org/directory -w /var/data/sitiosWeb/mechabios -d mechabios.com -d www.mechabios.com -w /var/data/sitiosWeb/mqtt.mechabios -d mqtt.mechabios.com -w /var/data/sitiosWeb/pop.mechabios -d pop.mechabios.com -w /var/data/sitiosWeb/smtp.mechabios -d smtp.mechabios.com -w /var/data/sitiosWeb/imap.mechabios -d imap.mechabios.com -w /var/data/sitiosWeb/mail.mechabios -d mail.mechabios.com -w /var/data/sitiosWeb/iot.mechabios -d iot.mechabios.com
+	certbot renew 
+
+
+Archivo: /var/data/nginx/configuraciones/actualizarCertbot.sh
+-------------------------------------------------------------------------------------------------
+#!/bin/bash
+echo "Comienza proceso de actualizacion" &
+process_id=$!
+
+echo "Respaldo 443" &
+mv /etc/nginx/sites-available/mechabios.com /etc/nginx/sites-available/mechabios_443.com
+echo "Respaldo de 443 terminado con: "
+
+echo "Paso el 80 a nginx" &
+mv /etc/nginx/sites-available/mechabios_80.com /etc/nginx/sites-available/mechabios.com
+echo "Pasaje del 80 terminado con: "
+
+echo "Recargo "
+service nginx reload $?
+wait $?
+echo "Nginx recargado con: " $?
+
+echo "Actualizar certificado" &
+certbot certonly --force-renewal --webroot --preferred-chain "ISRG Root X1" --force-renewal --agree-tos -m mechabios@gmail.com --preferred-challenges http --server https://acme-v02.api.letsencrypt.org/directory -w /var/data/sitiosWeb/mechabios -d mechabios.com -d www.mechabios.com -w /var/data/sitiosWeb/mqtt.mechabios -d mqtt.mechabios.com -w /var/data/sitiosWeb/pop.mechabios -d pop.mechabios.com -w /var/data/sitiosWeb/smtp.mechabios -d smtp.mechabios.com -w /var/data/sitiosWeb/imap.mechabios -d imap.mechabios.com -w /var/data/sitiosWeb/mail.mechabios -d mail.mechabios.com -w /var/data/sitiosWeb/iot.mechabios -d iot.mechabios.com
+wait $?
+echo "Fin actualizar el certificado: " $?
+
+echo "Respaldo el 80 a nginx" &
+mv /etc/nginx/sites-available/mechabios.com /etc/nginx/sites-available/mechabios_80.com
+echo "Pasaje al 80 terminado con: "
+
+echo "Paso el 443 a produccion" &
+mv /etc/nginx/sites-available/mechabios_443.com /etc/nginx/sites-available/mechabios.com
+echo "Respaldo de 443 terminado con: "
+
+echo "Recargo "
+service nginx reload $?
+wait $?
+echo "Nginx recargado con: " $?
+
+
+
+
+# Set which domain this script will be run for
+MY_DOMAIN=mechabios.com
+# Set the directory that the certificates will be copied to.
+CERTIFICATE_DIR=/etc/mosquitto/certs
+
+if [ "${RENEWED_DOMAINS}" = "${MY_DOMAIN}" ]; then
+        # Copy new certificate to Mosquitto directory
+        cp ${RENEWED_LINEAGE}/fullchain.pem ${CERTIFICATE_DIR}/server.pem
+        cp ${RENEWED_LINEAGE}/privkey.pem ${CERTIFICATE_DIR}/server.key
+
+        # Set ownership to Mosquitto
+        chown mosquitto: ${CERTIFICATE_DIR}/server.pem ${CERTIFICATE_DIR}/server.key
+
+        # Ensure permissions are restrictive
+        chmod 0600 ${CERTIFICATE_DIR}/server.pem ${CERTIFICATE_DIR}/server.key
+
+        # Ensure permissions are restrictive
+        chmod 0600 ${CERTIFICATE_DIR}/server.pem ${CERTIFICATE_DIR}/server.key
+
+        # Tell Mosquitto to reload certificates and configuration
+        pkill -HUP -x mosquitto
+fi
+
+echo "Termine!!"
+
+
+
+Para probar esto
+
+  
+  
+  No se si funciona:
+  crontab -e
+  0 0 * * * certbot renew --noninteractive --post-hook "systemctl reload nginx"
+
+-------------------------------------------------------------------------------------------------
+Programar renovacion en crontab
+crontab -e
+0 0 * * * certbot renew --quiet
+# Esta linea es por si no funciona la de arriba, porque el puerto 80 esta bloqueado
+0 0 * * * /var/data/nginx/configuraciones/actualizarCertbot.sh
+
+Ver logs de cron
+grep CRON /var/log/syslog
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ufw insert [position] [rule text]
+
+
+
+
+
+https://www.linuxcapable.com/how-to-install-modsecurity-with-nginx-on-ubuntu-20-04/
+
+
+
+
+server-world.info/en/note?os=Ubuntu_20.04&p=mail&f=5
+https://serverspace.io/support/help/postfix-as-a-send-only-smtp-on-ubuntu/
+https://www.golinuxcloud.com/postfix-smtpd-relay-restrictions/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sudo apt-get install acl
+sudo setfacl -R -m u:mosquitto:rX /etc/letsencrypt/{live,archive}
+sudo systemctl restart mosquitto
+
+sudo systemctl enable mosquitto.service
+
+--ESCUCHA
+
+
+
+
+PUBLICA
+
+
+Funciona
+mosquitto_pub -h www.mechabios.com -p 8883 -t test -m 'MECHABIOS 8883' -u mqttmecha -P sVirN7Dqa2T6L
+Funciona
+mosquitto_pub -h www.mechabios.com -p 8883 -t test -m 'HELLO WORLD 8883' -u mqttmecha -P sVirN7Dqa2T6L --capath /etc/ssl/certs/
+
+sudo ufw allow 1883
+sudo ufw allow 8883
+sudo ufw allow 8083
+
+
+Para probar:
+mosquitto_pub -h www.mechabios.com -t test -m "idU=96b76666-1172-4aa5-b3a5-8336fbeff796/idS=Dispositivo1?lat=2.5&long=3.8&ele=0&c1=22.22&c2=33.33" -p 8883 --capath /etc/ssl/certs/ -u "mqttmecha" -P "sVirN7Dqa2T6L"
+
+Prueba de mosquitto con certificado
+https://hobbyquaker.github.io/mqtt-admin/
+protocol ws://
+host www.mechabios.com
+port 8083
+user cpiriz
+pass cpiriz
+
+mosquitto_sub -h mechabios.com -p 8883 -t test -u "cpiriz" -P "cpiriz" --capath /etc/ssl/certs/ --insecure -d
+mosquitto_pub -h mechabios.com -p 8883 -t test -m 'Prueba 8883 insegura' -u "cpiriz" -P "cpiriz" --capath /etc/ssl/certs/ --insecure -d
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Paso 4: Crear usuario mantenimiento para usarlo con docker
+https://www.zeppelinux.es/crear-usuarios-en-linux-desde-la-linea-de-comandos/#an_n3
+---------------------------------------------------------------------------------------------------
+sudo adduser mantenimiento 
+123*Caps.
+
+
+
+
+Paso 9:CREACION IMAGEN DOCKER PHP 
+-------------------------------------------------------------------------------------
+## PHP - Esto es para correr los sitios php
+# Creacion de dockerfile
+cd /var/data/docker/fuentes/apache/php
+vim Dockerfile
+	FROM httpd:2.4.51-alpine
+# Compilacion del archivo y creacion de la imagen
+docker build -t apache2_php_img .
+# Correr la imagen creada
+docker run -dit --name my-php-corriendo -v /var/data/sitiosWeb/php/:/usr/local/apache2/htdocs/ -p 8010:80 apache2_php_img
+#Para remover contenedores
+docker container rm my-php-corriendo
+
+#Agregar la regla de firewall para pruebas
+sudo ufw allow 8010/tcp
+
+
+Paso 10:CREACION IMAGEN DOCKER JAVAEE
+-------------------------------------------------------------------------------------
+## JAVA - Esto es para correr los sitios de java
+# Creacion de dockerfile
+cd /var/data/docker/fuentes/wildFly/
+vim Dockerfile
+	FROM jboss/wildfly:25.0.0.Final
+	RUN /opt/jboss/wildfly/bin/add-user.sh cpiriz 123*Caps. --silent
+	CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+
+# Compilacion del archivo y creacion de la imagen
+docker build -t img-wildfly .
+# Correr la imagen creada
+docker run --name my-jee-corriendo -p 8080:8080 -p 9990:9990 -v /var/data/jee/prueba:/opt/jboss/wildfly/standalone/deployments/ -dit img-wildfly /opt/jboss/wildfly/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 
+
+#Agregar la regla de firewall para pruebas
+sudo ufw allow 8080/tcp
+sudo ufw allow 9990/tcp
+
+##ESTA PARTE NO FUNCIONA
+-v /var/data/jee/prueba:/opt/jboss/wildfly/standalone/deployments/ -w
+
+Paso 11:CREACION IMAGEN DOCKER NGINX
+-------------------------------------------------------------------------------------
+/************************/
+Primera opcion
+/************************/
+
+# Creacion de dockerfile
+cd /var/data/docker/fuentes/nginx/
+vim Dockerfile
+	FROM nginx:1.21.4-alpine
+	
+
+# Compilacion del archivo y creacion de la imagen
+docker build -t img-nginx .
+# Correr la imagen creada
+#docker run --name nginx-corriendo -p 8081:80 -dit img-nginx -v /host/path/nginx.conf:/etc/nginx/nginx.conf:ro
+docker run --name nginx-corriendo -p 8081:80 -dit img-nginx
+
+#Agregar la regla de firewall para pruebas
+sudo ufw allow 8081/tcp
+
+/************************/
+Segunda opcion
+/************************/
+
+# Creacion de dockerfile
+cd /var/data/docker/fuentes/nginx/
+mkdir my_conf.d
+mkdir nginx_certificados
+vim Dockerfile
+	FROM jonasal/nginx-certbot:latest
+	RUN mkdir -p /var/www/new_directory
+	COPY my_conf.d/* /etc/nginx/conf.d/
+
+# Compilacion del archivo y creacion de la imagen
+docker build -t img-nginx-certbot .
+# Correr la imagen creada
+docker run -it -p 80:80 -p 443:443 --env CERTBOT_EMAIL=mechabios@gmail.com --name nginx-certbot-corriendo img-nginx-certbot
+docker run -it -p 80:80 -p 443:443 --env CERTBOT_EMAIL=mechabios@gmail.com -v $(pwd)/nginx_certificados:/etc/letsencrypt --name nginx-certbot-corriendo img-nginx-certbot
+docker run -it -p 80:80 -p 443:443 --env CERTBOT_EMAIL=mechabios@gmail.com -v $(pwd)/nginx_certificados:/etc/letsencrypt -v $(pwd)/my_conf.d:/etc/nginx/user_conf.d:ro --name nginx-certbot-corriendo img-nginx-certbot
+		   
+
+
+#Agregar la regla de firewall para pruebas
+sudo ufw allow 8081/tcp
+
+Interesante
+https://atareao.es/tutorial/docker/ejecutar-contenedores-docker/
+
+
+Paso 12:CREACION IMAGEN DOCKER MARIADB
+-------------------------------------------------------------------------------------
+# Creacion de dockerfile
+cd /var/data/docker/fuentes/mariaDB
+vim Dockerfile
+	FROM mariadb:10.7.4-focal
+# Compilacion del archivo y creacion de la imagen
+docker build -t img-maria-db .
+
+#docker run --name mariadb-corriendo -e MYSQL_ROOT_PASSWORD=mypass  -p 3306:3306 -dit img-maria-db
+docker run --name mariadb-corriendo -e MYSQL_ROOT_PASSWORD=123*Caps.  -p 3306:3306 -dit img-maria-db
+
+#Agregar la regla de firewall para pruebas
+sudo ufw allow 3306/tcp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Paso 12:
+-------------------------------------------------------------------------------------
+# DOCKER COMPOSE
+ARCHIVO: docker-compose.yaml
+version: "3.7"
+services:
+	apache-app:
+		image: apache2_php
+		volumes:
+			- /var/data/sitiosWeb/php/:/usr/local/apache2/htdocs/:ro
+		ports:
+			- 8080:80
+
+
+#Para remover contenedores
+docker rm my-php-corriendo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+G) Configurar Snippet para apuntar los certificados al mismo directorio
+
+vi /etc/nginx/snippets/letsencrypt.conf
+location ^~ /.well-known/acme-challenge/ {
+    default_type "text/plain";
+    root /var/data/sitiosWeb/certificados/letsencrypt;
+}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+cd /etc/nginx/sites-available/
+/*Copiar favicon.ico al root*/
+
+
+
+vi imap.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/imap.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name imap.mechabios.com www.imap.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}
+    location ~ /.well-known {
+        allow all;
+    }	
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+vi iot.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/iot.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name iot.mechabios.com www.iot.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}    
+	location ~ /.well-known {
+        allow all;
+    }	
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+vi mail.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/mail.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name mail.mechabios.com www.mail.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}	
+    location ~ /.well-known {
+        allow all;
+    }
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+
+vi smtp.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/smtp.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name smtp.mechabios.com www.smtp.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}	
+    location ~ /.well-known {
+        allow all;
+    }
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+
+vi mqtt.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/mqtt.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name mqtt.mechabios.com www.mqtt.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}
+    location ~ /.well-known {
+        allow all;
+    }	
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+
+vi pop.mechabios.com
+/*------------------------------------------------------------------------------------------*/
+server {
+	listen 80;
+	listen [::]:80;	
+	
+	root /var/data/sitiosWeb/pop.mechabios;
+	
+	index index.html index.htm index.nginx-debian.html;
+	server_name pop.mechabios.com www.pop.mechabios.com;
+	include snippets/letsencrypt.conf;
+	location ~ \.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|pdf|txt|tar|wav|bmp|rtf|js|flv|swf|html|htm|woff2|svg)$ {
+		expires 1d;
+		access_log off;
+		add_header X-Static-File true;
+	}
+	location / {
+		try_files $uri $uri/ =404;		
+	}	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+	}
+    location ~ /.well-known {
+        allow all;
+    }	
+	location ~ /\.ht {
+		deny all;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/pruebaWeb.com /etc/nginx/sites-enabled/pruebaWeb.com
+sudo ln -s /etc/nginx/sites-available/pruebaMvc.com /etc/nginx/sites-enabled/pruebaMvc.com
+sudo ln -s /etc/nginx/sites-available/mechabios.com /etc/nginx/sites-enabled/mechabios.com
+sudo ln -s /etc/nginx/sites-available/imap.mechabios.com /etc/nginx/sites-enabled/imap.mechabios.com
+sudo ln -s /etc/nginx/sites-available/iot.mechabios.com /etc/nginx/sites-enabled/iot.mechabios.com
+sudo ln -s /etc/nginx/sites-available/mail.mechabios.com /etc/nginx/sites-enabled/mail.mechabios.com
+sudo ln -s /etc/nginx/sites-available/smtp.mechabios.com /etc/nginx/sites-enabled/smtp.mechabios.com
+sudo ln -s /etc/nginx/sites-available/mqtt.mechabios.com /etc/nginx/sites-enabled/mqtt.mechabios.com
+sudo ln -s /etc/nginx/sites-available/pop.mechabios.com /etc/nginx/sites-enabled/pop.mechabios.com
+
+
+sudo nginx -t
+sudo systemctl reload nginx
+
+
+
+
+
+Paso 13: INSTALACION DE CERTBOT
+-----------------------------------------------------------------------------------------------------------------------
+
+--instalar snap o verificar si no viene preinstalado
+--actualizar snap
+sudo snap install core
+sudo snap refresh core
+sudo apt-get remove certbot
+sudo apt-get update
+
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+ufw allow 80
+ufw allow 'Nginx HTTP'
+
+sudo certbot certonly --webroot --webroot-path /var/data/sitiosWeb/certificados/letsencrypt -d mechabios.com -d www.mechabios.com -d mqtt.mechabios.com -d pop.mechabios.com -d smtp.mechabios.com -d imap.mechabios.com -d mail.mechabios.com -d iot.mechabios.com --email piriz.carlos@gmail.com
+
+--Probar la renovacion
+certbot renew --dry-run
+
+--Programar la renovacion
+crontab -e
+0 0 * * * certbot renew --noninteractive --post-hook "systemctl reload nginx"
+
+
+PASO 14: CREACION DE ARCHIVOS DE SEGURIDAD
+-----------------------------------------------------------------------------------------------------------------------
+https://gist.github.com/pedrouid/4abcc16c0218a46a577cfa8186cb845d
+https://scaron.info/blog/improve-your-nginx-ssl-configuration.html
+
+sudo openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 4096       #ORIGINAL -> 2048
+
+
+sudo vi /etc/nginx/snippets/ssl-params.conf
+
+# Paste the following from https://cipherli.st/ (follow the link for more info)
+ssl_protocols TLSv1.3 TLSv1.2 TLSv1.1 TLSv1;
+ssl_prefer_server_ciphers on;
+# ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK';
+ssl_ecdh_curve secp384r1; # Requires nginx >= 1.1.0
+ssl_session_timeout  10m;
+ssl_session_cache shared:SSL:10m;
+ssl_session_tickets off; # Requires nginx >= 1.5.9
+ssl_stapling on; # Requires nginx >= 1.3.7
+ssl_stapling_verify on; # Requires nginx => 1.3.7
+resolver 62.171.185.8 62.171.185.8 valid=300s;
+resolver_timeout 5s;
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+add_header X-Frame-Options DENY;
+add_header X-Content-Type-Options nosniff;
+add_header X-XSS-Protection "1; mode=block";
+
+
+# Paste this at the bottom of the file
+ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
+
+
+
+
+
+
+
+
+
+
+Paso 16: EDICION DE BLOQUES NGINX PARA SSL
+-----------------------------------------------------------------------------------------------------------------------
+A) Configurar los sitios NET
+
+vi /etc/nginx/sites-available/mechabios.com
+--Agregar
+listen 443 ssl http2;
+listen [::]:443 ssl http2;
+ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+include snippets/ssl-params.conf;
+
+if ($scheme != "https") {
+	return 301 https://$host$request_uri;
+}
+
+
+Probar el certificado
+https://www.ssllabs.com/ssltest/analyze.html?d=mechabios.com
+
+
+
+vi /etc/nginx/sites-available/pruebaWeb.com
+--Puedo habilitar escuchar en el 80 y Nginx HTTP para probar o NO
+--Editar
+# listen 80;
+# listen [::]:80;
+
+listen 443 ssl http2;
+listen [::]:443 ssl http2;
+ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+include snippets/ssl-params.conf;
+
+if ($scheme != "https") {
+	return 301 https://$host$request_uri;
+}
+
+
+vi /etc/nginx/sites-available/pruebaMvc.com
+--Puedo habilitar escuchar en el 80 y Nginx HTTP para probar o NO
+--Editar
+# listen 80;
+# listen [::]:80;
+
+listen 443 ssl http2;
+listen [::]:443 ssl http2;
+ssl_certificate /etc/letsencrypt/live/mechabios.com/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/mechabios.com/privkey.pem;
+include snippets/ssl-params.conf;
+
+if ($scheme != "https") {
+	return 301 https://$host$request_uri;
+}
+
+
+https://www.ssllabs.com/ssltest/
+
+B) DESHABILITAR DE NGINX LOS SITIOS DE PRUEBAS .NET
+cd /etc/nginx/sites-enabled/
+rm pruebaWeb.com
+rm pruebaMvc.com
+rm php1.com
+rm php2.com
+rm apache
+rm nginx1.your_domain
+rm nginx2.your_domain
+rm iot.mechabios.com
+rm imap.mechabios.com
+rm pop.mechabios.com
+rm mqtt.mechabios.com
+rm smtp.mechabios.com
+rm mail.mechabios.com
+rm default.bak
+nginx  -t
+systemctl reload nginx
+
+
+C) DESHABILITAR DE SUPERVISOR LOS SITIOS DE PRUEBAS .NET
+vi /etc/supervisor/supervisord.conf
+systemctl stop supervisor
+systemctl start supervisor
+tail -f /var/log/supervisor/supervisord.log
+
+
+
+
+Paso 19) CREAR BD MECHABIOS
+-----------------------------------------------------------------------------------------------------------------------
+
+Reemplazar :
+,no_auto_create_user, por ,
+,no_auto_create_user por ,
+no_auto_create_user por 
+
+borrar las lineas con definer  O ESTABLECER EL DEFINER A UN USUARIO QUE SE QUIERA DAR ACCESO PARA MQTT POR EJEMPLO
+
+
+Ejecutar:
+-- aGREGARLO EN EL ARCHIVO DE SCRIPT AL PRINCIPIO
+SET GLOBAL log_bin_trust_function_creators = 1;
+
+Hacer respaldo con Workbench
+
+Paso 20) PUBLICAR MECHABIOS
+-----------------------------------------------------------------------------------------------------------------------
+Actualizar en VS2019 el codigo,
+Compilarlo y correrlo.
+
+Editar los archivos para usuario, contraseña,ip de conexion con mysql
+Publicar el sitio web
+COmprimir la carpeta y subirla por winscp
+Limpiar la carpeta /var/data/sitiosWeb/mechabios (dejar .WellKnown)
+Copiar el zip ahi.
+Descomprimir y subir todo un nivel.
+Verificar que supervisor apunta a la dll de mechabios correcta.
+verificar los archivos estaticos
+Habilitar Nginx 
+
+
+
+
+
+Paso 21) PONER A CORRER APLICACIONES NODEJS
+-----------------------------------------------------------------------------------------------------------------------
+https://iotassistant.io/home-assistant/install-mqtt-websockets-on-nginx/
+
+cd /var/data/nodeJS/Produccion/general
+npm install mysql;
+
+cd /var/data/nodeJS/Produccion/escuchaMosquitto
+npm install mqtt;
+npm install underscore;
+
+
+
+
+
+
+
+Paso 22) PONER A CORRER APLICACIONES NODEJS
+-----------------------------------------------------------------------------------------------------------------------
+Subir el zip de aplicaciones nodejs
+Descomprimir las carpetas en /var/data/nodeJS
+
+A) PUESTA A PUNTO DE ESCUCHAMOSQUITTO
+
+cd /var/data/nodeJS/escuchaMosquitto
+Correr:
+npm install mysql
+
+vi db.js
+
+
+npm install mysql
+npm install express
+npm install mqtt
+npm install underscore
+vi mqttNodeJsListener.js
+
+
+
+
+
+
+
+
+
+https://dzone.com/articles/mqtt-load-balancing-and-session-persistence-with-nginx-plus
+
+https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04-es
+
+https://community.home-assistant.io/t/how-to-configure-nginx-to-reverse-proxy-to-mqtt-using-ssl/63634/6
+https://community.letsencrypt.org/t/same-crtificate-for-nginx-and-mqtt-mosquitto/36909/2
+https://community.home-assistant.io/t/how-to-configure-nginx-to-reverse-proxy-to-mqtt-using-ssl/63634/2
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-ubuntu-18-04-quickstart
+https://stackoverflow.com/questions/66591817/mqtt-with-nginx-and-lets-encrypt
+
+https://community.letsencrypt.org/t/same-crtificate-for-nginx-and-mqtt-mosquitto/36909/11
+
+
+
+
+
+
+
+
+
+
+***************************************************************************
+NO CONFIGURADOS
+***************************************************************************
+-----------------------------------------------------------------------------------------------------------------------
+INSTALAR SAMBA
+apt-get install samba samba-common python-glade2 system-config-samba (demora)
+service smbd restart
+service smbd status
+service smbd stop
+ufw allow Samba
+
+AGREGAR USUARIO A SAMBA
+smbpasswd -a adminito
+
+CONFIGURAMOS LOS SHARES
+HACEMOS RESPALDO
+	   cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
+	   vi /etc/samba/smb.conf
+
+CONFIGURAMOS EN EL ARCHIVO
+[webPublicas]
+comment = Sitios Web NET CORE
+path = /var/data/sitiosWeb
+valid users = adminito
+read only = no
+[temp]
+comment = Carpeta de Temporales
+path = /var/data/temp
+valid users = adminito
+read only = no        
+
+COMPROBAMOS QUE LA CONFIGURACION ESTE BIEN
+testparm
+
+ADMINISTRACION DE SAMBA
+service smbd stop
+service smbd start
+Para ver las carpetas compartidas en uso
+smbstatus --shares
+
+
+https://medium.com/eudaimonia-ar/certificar-dominios-con-letsencrypt-y-nginx-con-docker-compose-a6a948f47f2f
+https://dev.to/euda/certificacion-de-dominio-con-let-s-encrypt-nginx-y-docker-compose-16p4
+https://www.jetbrains.com/help/youtrack/standalone/run-docker-container-as-service.html
